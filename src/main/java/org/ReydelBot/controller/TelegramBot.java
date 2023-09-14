@@ -1,4 +1,4 @@
-package org.ReydelBot;
+package org.ReydelBot.controller;
 
 import lombok.AllArgsConstructor;
 import org.ReydelBot.config.botConfig;
@@ -7,11 +7,14 @@ import org.ReydelBot.service.CarService;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
+import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
+import java.io.File;
 import java.io.IOException;
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -32,6 +35,7 @@ public class TelegramBot extends TelegramLongPollingBot {
     public String getBotToken() {
         return botConfig.getBotToken();
     }
+
     @Override
     public void onUpdateReceived(Update update) {
         CarModel carModel = new CarModel();
@@ -45,6 +49,15 @@ public class TelegramBot extends TelegramLongPollingBot {
             switch (messageText){
                 case "/start":
                     startCommandReceived(chatId, update.getMessage().getChat().getFirstName());
+
+                    break;
+                case "Бренды":
+                    startCommandReceivedList(chatId, update.getMessage().getChat().getFirstName());
+
+                    break;
+                case "Фото":
+                    //codes
+                    startCommandReceivedImages(chatId);
 
                     break;
                 default:
@@ -61,6 +74,37 @@ public class TelegramBot extends TelegramLongPollingBot {
             }
         }
     }
+
+    private void startCommandReceivedImages(Long chatId){
+        try{
+            sendPhoto(chatId);
+        }catch (Exception e){}
+    }
+    private void sendPhoto(Long chatId){
+        SendPhoto sendPhoto = new SendPhoto();
+        File file = new File("src/main/resources/images/mercedes.jpg");
+        InputFile inputFile = new InputFile(file);
+
+        sendPhoto.setChatId(chatId);
+        sendPhoto.setPhoto(inputFile);
+        sendPhoto.setCaption("photo");
+
+        try{
+            execute(sendPhoto);
+        }catch (Exception e){}
+    }
+    private void startCommandReceivedList(Long chatId, String name){
+        //brands list
+        String answer = "";
+        try {
+            for (CarModel car : CarService.getCarList()){
+                answer += car.getCarBrand();
+                answer += " ";
+            }
+        }catch (Exception e){}
+
+        sendMessage(chatId, answer);
+    }
     private void startCommandReceived(Long chatId, String name){
         String answer = "Добрый день " + name + "\n" +
                 "Введите код автомобиля: " + "\n" +
@@ -76,17 +120,14 @@ public class TelegramBot extends TelegramLongPollingBot {
 
         List<KeyboardRow> keyboardRows = new ArrayList<>();
 
-        KeyboardRow row1 = new KeyboardRow();
-        KeyboardRow row2 = new KeyboardRow();
-        KeyboardRow row3 = new KeyboardRow();
+        KeyboardRow brands = new KeyboardRow();
+        KeyboardRow photo = new KeyboardRow();
 
-        row1.add("1");
-        row2.add("2");
-        row3.add("3");
+        brands.add("Бренды");
+        photo.add("Фото");
 
-        keyboardRows.add(row1);
-        keyboardRows.add(row2);
-        keyboardRows.add(row3);
+        keyboardRows.add(brands);
+        keyboardRows.add(photo);
 
         keyboardMarkup.setKeyboard(keyboardRows);
 

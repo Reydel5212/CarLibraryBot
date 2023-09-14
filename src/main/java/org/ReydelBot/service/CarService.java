@@ -1,5 +1,6 @@
 package org.ReydelBot.service;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.ReydelBot.model.CarModel;
 import org.springframework.stereotype.Service;
@@ -7,6 +8,7 @@ import org.springframework.stereotype.Service;
 import java.io.IOException;
 import java.net.URL;
 import java.text.ParseException;
+import java.util.List;
 
 @Service
 public class CarService {
@@ -38,6 +40,15 @@ public class CarService {
                 "Описание: " + "\n" +
                 carModel.getCarDescription();
 
+    }
+    public static List<CarModel> getCarList() throws IOException {
+        URL url = new URL("http://localhost:8081/CarRestController/getCarInfo");
+
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        List<CarModel> carModelList = objectMapper.readValue(url, new TypeReference<List<CarModel>>(){});
+
+        return carModelList;
     }
 
 }
