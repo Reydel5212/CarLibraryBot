@@ -4,20 +4,20 @@ import lombok.AllArgsConstructor;
 import org.ReydelBot.config.botConfig;
 import org.ReydelBot.model.CarModel;
 import org.ReydelBot.service.CarService;
+import org.ReydelBot.service.KeyBoardService;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
 import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.api.objects.Update;
+import org.telegram.telegrambots.meta.api.objects.commands.BotCommand;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.io.File;
 import java.io.IOException;
 import java.text.ParseException;
-import java.util.ArrayList;
 import java.util.List;
 
 
@@ -25,6 +25,7 @@ import java.util.List;
 @AllArgsConstructor
 public class TelegramBot extends TelegramLongPollingBot {
     private final botConfig botConfig;
+    private final KeyBoardService keyBoardService;
 
     @Override
     public String getBotUsername() {
@@ -38,106 +39,92 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     @Override
     public void onUpdateReceived(Update update) {
-        CarModel carModel = new CarModel();
-        String carStr = "";
+
 
         if(update.hasMessage() && update.getMessage().hasText()){
+            //user chatId and chatText
             String messageText = update.getMessage().getText();
+            String userName = update.getMessage().getChat().getFirstName();
             long chatId = update.getMessage().getChatId();
 
-            //Keyboard button
             switch (messageText){
                 case "/start":
-                    startCommandReceived(chatId, update.getMessage().getChat().getFirstName());
+                    startCaseMethod(chatId);
 
                     break;
-                case "Бренды":
-                    startCommandReceivedList(chatId, update.getMessage().getChat().getFirstName());
-
-                    break;
-                case "Фото":
-                    //codes
-                    startCommandReceivedImages(chatId);
+                case "Все бренды":
+                    startCommandReceivedList(chatId);
 
                     break;
                 default:
+                    String carStr = " ";
+                    CarModel carModel = new CarModel();
+
                     try{
                         carStr = CarService.getCarInfo(messageText, carModel);
                     } catch (IOException e){
-                        sendMessage(chatId, "Такого нет." + "\n" +
-                                "Введите код автомобиля." + "\n" +
-                                "Пример: 1");
+                        sendMessage(chatId, "Такого автомобиля в базе нет." + "\n" +
+                                "Повторите попытку.");
                     } catch (ParseException e){
                         throw new RuntimeException("Unable to parse date");
                     }
-                    sendMessage(chatId, carStr);
+                    messageCarInfo(chatId, carStr, messageText);
             }
         }
     }
 
-    private void startCommandReceivedImages(Long chatId){
-        try{
-            sendPhoto(chatId);
-        }catch (Exception e){}
-    }
-    private void sendPhoto(Long chatId){
-        SendPhoto sendPhoto = new SendPhoto();
-        File file = new File("src/main/resources/images/mercedes.jpg");
-        InputFile inputFile = new InputFile(file);
-
-        sendPhoto.setChatId(chatId);
-        sendPhoto.setPhoto(inputFile);
-        sendPhoto.setCaption("photo");
-
-        try{
-            execute(sendPhoto);
-        }catch (Exception e){}
-    }
-    private void startCommandReceivedList(Long chatId, String name){
+    //for change
+    private void startCommandReceivedList(Long chatId){
         //brands list
-        String answer = "";
+        String answer = "Вам доступны автомобили следующих брендов: " + "\n";
+
         try {
+
             for (CarModel car : CarService.getCarList()){
-                answer += car.getCarBrand();
-                answer += " ";
+                answer += car.getCarId() + ". " + car.getCarBrand() + "\n";
             }
         }catch (Exception e){}
 
         sendMessage(chatId, answer);
     }
-    private void startCommandReceived(Long chatId, String name){
-        String answer = "Добрый день " + name + "\n" +
-                "Введите код автомобиля: " + "\n" +
-                "Пример: 1";
+    private void startCaseMethod(Long chatId){
+        String answer = "Добро пожаловать в библиотеку автомобилей!" + "\n"
+                + "Доступные команды: " + "\n"
+                + "1.Все бренды";
         sendMessage(chatId, answer);
     }
+
     private void sendMessage(Long chatId, String textToSend){
         SendMessage sendMessage = new SendMessage();
-        sendMessage.setChatId(String.valueOf(chatId));
-        sendMessage.setText(textToSend);
+        ReplyKeyboardMarkup keyboardMarkup = keyBoardService.getKeyBoard();
 
-        ReplyKeyboardMarkup keyboardMarkup = new ReplyKeyboardMarkup();
-
-        List<KeyboardRow> keyboardRows = new ArrayList<>();
-
-        KeyboardRow brands = new KeyboardRow();
-        KeyboardRow photo = new KeyboardRow();
-
-        brands.add("Бренды");
-        photo.add("Фото");
-
-        keyboardRows.add(brands);
-        keyboardRows.add(photo);
-
-        keyboardMarkup.setKeyboard(keyboardRows);
-
+        sendMessage.setChatId(chatId);
         sendMessage.setReplyMarkup(keyboardMarkup);
+        sendMessage.setText(textToSend);
 
         try{
             execute(sendMessage);
-        }catch (TelegramApiException e){
+        }catch (Exception e){}
+    
+    }
+    private void messageCarInfo(Long chatId, String textToSend, String imageId){
 
-        }
+        SendPhoto sendPhoto = new SendPhoto();
+        File file = new File("src/main/resources/images/"+ imageId + ".jpg");
+        InputFile inputFile = new InputFile(file);
+
+        ReplyKeyboardMarkup keyboardMarkup = keyBoardService.getKeyBoard();
+
+        //sendPhoto init
+        sendPhoto.setChatId(chatId);
+        sendPhoto.setPhoto(inputFile);
+        sendPhoto.setCaption(textToSend);
+        sendPhoto.setReplyMarkup(keyboardMarkup);
+
+        try{
+            execute(sendPhoto);
+        }catch (TelegramApiException e){}
+
     }
 
 }

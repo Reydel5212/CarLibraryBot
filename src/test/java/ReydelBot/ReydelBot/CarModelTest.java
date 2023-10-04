@@ -21,7 +21,7 @@ public class CarModelTest {
     }
     @Test
     public void filePathTest(){
-        File file = new File("src/main/resources/images/mercedes.jpg");
+        File file = new File("src/main/resources/images/Mercedes.jpg");
         InputFile inputFile = new InputFile(file);
         System.out.println(inputFile);
     }

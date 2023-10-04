@@ -14,7 +14,7 @@ import java.util.List;
 public class CarService {
 
     public static String getCarInfo(String message, CarModel carModel) throws IOException, ParseException{
-        URL url = new URL("http://localhost:8081/CarRestController/"+ message +"/showCar");
+        URL url = new URL("http://localhost:8081/CarRestController/"+ message +"/showCarByBrand");
 
         ObjectMapper objectMapper = new ObjectMapper();
 
