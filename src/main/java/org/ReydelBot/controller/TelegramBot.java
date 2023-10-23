@@ -1,7 +1,7 @@
 package org.ReydelBot.controller;
 
 import lombok.AllArgsConstructor;
-import org.ReydelBot.config.botConfig;
+import org.ReydelBot.config.BotConfig;
 import org.ReydelBot.model.CarModel;
 import org.ReydelBot.service.CarService;
 import org.ReydelBot.service.KeyBoardService;
@@ -11,20 +11,18 @@ import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
 import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.api.objects.Update;
-import org.telegram.telegrambots.meta.api.objects.commands.BotCommand;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.io.File;
 import java.io.IOException;
 import java.text.ParseException;
-import java.util.List;
-
 
 @Component
 @AllArgsConstructor
 public class TelegramBot extends TelegramLongPollingBot {
-    private final botConfig botConfig;
+
+    private final BotConfig botConfig;
     private final KeyBoardService keyBoardService;
 
     @Override
@@ -40,20 +38,20 @@ public class TelegramBot extends TelegramLongPollingBot {
     @Override
     public void onUpdateReceived(Update update) {
 
-
         if(update.hasMessage() && update.getMessage().hasText()){
             //user chatId and chatText
             String messageText = update.getMessage().getText();
             String userName = update.getMessage().getChat().getFirstName();
+
             long chatId = update.getMessage().getChatId();
 
             switch (messageText){
                 case "/start":
-                    startCaseMethod(chatId);
+                    startCaseCommand(chatId);
 
                     break;
                 case "Все бренды":
-                    startCommandReceivedList(chatId);
+                    brandListCommand(chatId);
 
                     break;
                 default:
@@ -66,20 +64,19 @@ public class TelegramBot extends TelegramLongPollingBot {
                         sendMessage(chatId, "Такого автомобиля в базе нет." + "\n" +
                                 "Повторите попытку.");
                     } catch (ParseException e){
-                        throw new RuntimeException("Unable to parse date");
+                        throw new RuntimeException("Exception");
                     }
                     messageCarInfo(chatId, carStr, messageText);
             }
         }
     }
 
-    //for change
-    private void startCommandReceivedList(Long chatId){
+    private void brandListCommand(Long chatId){
+
         //brands list
         String answer = "Вам доступны автомобили следующих брендов: " + "\n";
 
         try {
-
             for (CarModel car : CarService.getCarList()){
                 answer += car.getCarId() + ". " + car.getCarBrand() + "\n";
             }
@@ -87,7 +84,8 @@ public class TelegramBot extends TelegramLongPollingBot {
 
         sendMessage(chatId, answer);
     }
-    private void startCaseMethod(Long chatId){
+
+    private void startCaseCommand(Long chatId){
         String answer = "Добро пожаловать в библиотеку автомобилей!" + "\n"
                 + "Доступные команды: " + "\n"
                 + "1.Все бренды";
@@ -95,6 +93,7 @@ public class TelegramBot extends TelegramLongPollingBot {
     }
 
     private void sendMessage(Long chatId, String textToSend){
+
         SendMessage sendMessage = new SendMessage();
         ReplyKeyboardMarkup keyboardMarkup = keyBoardService.getKeyBoard();
 
@@ -107,6 +106,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         }catch (Exception e){}
     
     }
+
     private void messageCarInfo(Long chatId, String textToSend, String imageId){
 
         SendPhoto sendPhoto = new SendPhoto();

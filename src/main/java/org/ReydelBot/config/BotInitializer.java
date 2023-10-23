@@ -10,11 +10,11 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
 
 @Component
-public class botInitializer {
+public class BotInitializer {
     private final TelegramBot telegramBot;
 
     @Autowired
-    public botInitializer(TelegramBot telegramBot) {
+    public BotInitializer(TelegramBot telegramBot) {
         this.telegramBot = telegramBot;
     }
 
@@ -27,4 +27,5 @@ public class botInitializer {
 
         }
     }
+
 }
