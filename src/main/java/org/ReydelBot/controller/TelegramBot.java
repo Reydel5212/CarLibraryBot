@@ -88,7 +88,10 @@ public class TelegramBot extends TelegramLongPollingBot {
     private void startCaseCommand(Long chatId){
         String answer = "Добро пожаловать в библиотеку автомобилей!" + "\n"
                 + "Доступные команды: " + "\n"
-                + "1.Все бренды";
+                + "1.Все бренды"+ "\n"
+                + "2.Mercedes"+ "\n"
+                + "3.Bmw"+ "\n"
+                + "4.Audi";
         sendMessage(chatId, answer);
     }
 
